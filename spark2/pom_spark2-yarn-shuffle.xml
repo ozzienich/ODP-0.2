@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<!--    <parent>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-main</artifactId>
+        <version>2.7.1</version>
+    </parent> -->
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.huawei.test</groupId>
+  <artifactId>build-rpm</artifactId>
+  <name>Build RPM Project</name>
+  <packaging>pom</packaging>
+  <version>1.0.0</version>
+  <description>build rpm project</description>
+
+  <properties>
+    <!-- Set default encoding so multi-byte tests work correctly on the Mac -->
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <resources.dir>/data/BUILD/spark2/BUILD-spark2-yarn-shuffle/</resources.dir>
+      <hadoop.name>spark2</hadoop.name>
+      <hadoop.version>2.4.7</hadoop.version>
+      <hdp.version>0.2.0.0</hdp.version>
+      <hdp.vname>0_2_0_0</hdp.vname>
+      <hdp.release>02</hdp.release>
+      <hadoop-dist.dir>/data/BUILD/hadoop/hadoop-dist</hadoop-dist.dir>
+      <ranger-dist.dir>/data/BUILD/ranger</ranger-dist.dir>
+      <hadoop-source.dir>${project.basedir}/../source</hadoop-source.dir>
+      <rpm.install.dir>/usr/odp/${hdp.version}-${hdp.release}</rpm.install.dir>
+      <rpm.install.arch>x86_64</rpm.install.arch>
+      <hadoop.jar.version>3.1.1</hadoop.jar.version>
+  </properties>
+
+  <build>
+      <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>rpm-maven-plugin</artifactId>
+            <version>2.1.5</version>
+            <configuration>
+                <copyright>2021, optimasidata.com</copyright>
+                <distribution>ODP</distribution>
+                <group>ODP</group>
+                <packager>ozzie</packager>
+                <license>Apache License v2.0</license>
+                <url>https://www.optimasidata.com/ODP/</url>
+                <needarch>${rpm.install.arch}</needarch>
+                <targetOS>linux</targetOS>
+                <version>${hadoop.version}</version>
+                <release>ODI</release>
+				<defaultFilemode>644</defaultFilemode>
+				<defaultDirmode>755</defaultDirmode>
+				<defaultUsername>root</defaultUsername>
+				<defaultGroupname>root</defaultGroupname>
+            </configuration>
+            <executions>
+
+                <execution>
+                    <id>spark2_${hdp.vname}_${hdp.release}-yarn-shuffle</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>rpm</goal>
+                    </goals>
+                    <configuration>
+                        <name>spark2_${hdp.vname}_${hdp.release}-yarn-shuffle</name>
+                        <!--version>3.1.1.3.1.0.0</version-->
+                        <description>
+                            spark2-yarn-shuffle
+                        </description>
+                        <summary>
+                            spark2-yarn-shuffle
+                        </summary>
+                        <autoRequires>false</autoRequires>
+                        <requires>
+                            <require>spark2_${hdp.vname}_${hdp.release}</require>
+                        </requires>
+                        <mappings>
+                            <mapping>
+                                <directory>${rpm.install.dir}/spark2/aux</directory>
+                                <sources>
+                                    <source>
+                                        <location>${resources.dir}/spark-2.4.7-yarn-shuffle.jar</location>
+                                    </source>
+                                </sources>
+                            </mapping>
+                          <!--  <mapping>
+                                <directory>/var/lib/spark2</directory>
+                            </mapping> -->
+			            </mappings>
+                        <preinstallScriptlet>
+                            <script>
+
+                             echo "installing now"
+                            </script>
+                        </preinstallScriptlet>
+
+                        <postinstallScriptlet>
+                            <script>
+			                    echo "install success!";
+                            </script>
+                        </postinstallScriptlet>
+                        <preremoveScriptlet>
+                            <script>
+                                <!-- ?? -->
+                                rm -rf ${rpm.install.dir}/spark2/aux/spark-2.4.7-yarn-shuffle.jar
+                                echo "uninstalling  success";
+                            </script>
+                            <!-- ??????
+                            <scriptFile>src/main/scripts/preremove</scriptFile>
+                            <fileEncoding>utf-8</fileEncoding>
+                            -->
+                        </preremoveScriptlet>
+                    </configuration>
+                </execution>
+
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+</project>

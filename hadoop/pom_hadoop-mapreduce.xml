@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.apache</groupId>
+  <artifactId>build-rpm</artifactId>
+  <name>Build RPM Project</name>
+  <packaging>pom</packaging>
+  <version>1.0.0</version>
+  <description>build rpm project</description>
+
+  <properties>
+    <!-- Set default encoding so multi-byte tests work correctly on the Mac -->
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+     <resources.dir>/data/BUILD/hadoop/SOURCE/mapreduce</resources.dir>
+      <hadoop.name>hadoop</hadoop.name>
+      <hadoop.subname>yarn</hadoop.subname>
+      <hadoop.version>3.1.1</hadoop.version>
+      <hdp.version>0.2.0.0</hdp.version>
+      <hdp.vname>0_2_0_0</hdp.vname>
+      <hdp.release>02</hdp.release>
+      <hadoop-dist.dir>/data/BUILD/hadoop/hadoop-dist</hadoop-dist.dir>
+      <yarn-dist.dir>/data/BUILD/hadoop/hadoop-yarn-project/target/hadoop-yarn-project-3.1.1</yarn-dist.dir>
+      <rpm.install.dir>/usr/odp/${hdp.version}-${hdp.release}</rpm.install.dir>
+      <rpm.install.arch>x86_64</rpm.install.arch>
+      <hadoop.jar.version>3.1.1</hadoop.jar.version>
+  </properties>
+
+  <modules>
+  </modules>
+  <build>
+      <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>rpm-maven-plugin</artifactId>
+            <version>2.1.5</version>
+            <configuration>
+                <copyright>2021, optimasidata.com</copyright>
+                <distribution>ODP</distribution>
+                <group>System/Daemons</group>
+                <packager>ozzie</packager>
+                <license>Apache License v2.0</license>
+                <url>https://www.optimasidata.com/ODP/</url>
+                <needarch>${rpm.install.arch}</needarch>
+                <targetOS>linux</targetOS>
+                <version>${hadoop.version}</version>
+                <release>ODI</release>
+		<defaultFilemode>644</defaultFilemode>
+		<defaultDirmode>755</defaultDirmode>
+		<defaultUsername>root</defaultUsername>
+		<defaultGroupname>root</defaultGroupname>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>hadoop_${hdp.vname}_${hdp.release}-mapreduce</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>rpm</goal>
+                    </goals>
+                    <configuration>
+                        <name>hadoop_${hdp.vname}_${hdp.release}-mapreduce</name>
+                        <description>
+			Hadoop MapReduce is a programming model and software framework for writing applications
+			that rapidly process vast amounts of data in parallel on large clusters of compute nodes.
+                        </description>
+                        <summary>The Hadoop MapReduce (MRv2)</summary>
+                        <autoRequires>false</autoRequires>
+                        <requires>
+                            <require>hadoop_${hdp.vname}_${hdp.release}-yarn</require>
+                        </requires>
+                        <mappings>
+                        <mapping>
+
+                            <directory>${rpm.install.dir}/etc/hadoop/conf.empty</directory>
+                            <sources>
+                                <source>
+                                  <location>${hadoop-dist.dir}/target/hadoop-${hadoop.version}/etc/hadoop</location>
+                                    <includes>
+                                        <include>mapred-env.sh</include>
+                                        <include>mapred-queues.xml.template</include>
+                                        <include>mapred-site.xml</include>
+                                        <include>user_ec_policies.xml.template</include>
+                                    </includes>
+                                </source>
+                            </sources>
+                        </mapping>
+                        <mapping>
+                          <directory>${rpm.install.dir}/etc/security/limits.d/</directory>
+                          <sources>
+                            <source>
+                              <location>/data/BUILD/hadoop/SOURCE/mapreduce/mapred/security_limit</location>
+                              <includes>
+                                  <include>mapreduce.conf</include>
+                              </includes>
+                            </source>
+                        </sources>
+                        </mapping>
+                        <mapping>
+                          <directory>${rpm.install.dir}/hadoop-mapreduce/bin</directory>
+                          <sources>
+                            <source>
+                              <location>${resources.dir}/mapred/bin</location>
+                              <includes>
+                                  <include>mapred</include>
+                                  <include>mapred.distro</include>
+                              </includes>
+                            </source>
+                          </sources>
+                        </mapping>
+
+                        <!-- hadoop/bin -->
+                        <mapping>
+                          <directory>${rpm.install.dir}/hadoop/bin</directory>
+                          <sources>
+                            <source>
+                              <location>${resources.dir}/mapred/bin</location>
+                              <includes>
+                                  <include>mapred</include>
+                              </includes>
+                            </source>
+                          </sources>
+                        </mapping>
+
+                        <mapping>
+                          <directory>${rpm.install.dir}/hadoop-mapreduce/etc/rc.d/init.d</directory>
+                        </mapping>
+                        <!-- hadoop/libexec -->
+                        <mapping>
+                          <directory>${rpm.install.dir}/hadoop/libexec</directory>
+                          <sources>
+                            <source>
+                              <location>${hadoop-dist.dir}/target/hadoop-3.1.1/libexec</location>
+                              <includes>
+                                  <include>mapred-config.sh</include>
+                              </includes>
+                            </source>
+                          </sources>
+                        </mapping>
+                        <mapping>
+                            <directory>${rpm.install.dir}/hadoop-mapreduce</directory>
+                            <sources>
+                              <source>
+                                  <location>${resources.dir}/mapred/lib-ex</location>
+                              </source>
+                                <source>
+                                    <location>${hadoop-dist.dir}/target/hadoop-${hadoop.version}/share/hadoop/mapreduce</location>
+                                    <includes>
+                                        <include>hadoop-*.jar</include>
+                                    </includes>
+                                </source>
+                                <source>
+                                    <location>${hadoop-dist.dir}/target/hadoop-${hadoop.version}/share/hadoop/tools/lib/</location>
+                                </source>
+                                <softlinkSource>
+                                    <location>hadoop-mapreduce-client-app-3.1.1.jar</location>
+                                    <destination>hadoop-mapreduce-client-app.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-mapreduce-client-common-3.1.1.jar</location>
+                                    <destination>hadoop-mapreduce-client-common.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-mapreduce-client-core-3.1.1.jar</location>
+                                    <destination>hadoop-mapreduce-client-core.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-mapreduce-client-hs-3.1.1.jar</location>
+                                    <destination>hadoop-mapreduce-client-hs.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-mapreduce-client-hs-plugins-3.1.1.jar</location>
+                                    <destination>hadoop-mapreduce-client-hs-plugins.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-mapreduce-client-jobclient-3.1.1-tests.jar</location>
+                                    <destination>hadoop-mapreduce-client-jobclient-tests.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-mapreduce-client-jobclient-3.1.1.jar</location>
+                                    <destination>hadoop-mapreduce-client-jobclient.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-mapreduce-client-nativetask-3.1.1.jar</location>
+                                    <destination>hadoop-mapreduce-client-nativetask.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-mapreduce-client-shuffle-3.1.1.jar</location>
+                                    <destination>hadoop-mapreduce-client-shuffle.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-mapreduce-client-uploader-3.1.1.jar</location>
+                                    <destination>hadoop-mapreduce-client-uploader.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-mapreduce-examples-3.1.1.jar</location>
+                                    <destination>hadoop-mapreduce-examples.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-aliyun-3.1.1.jar</location>
+                                    <destination>hadoop-aliyun.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-archive-logs-3.1.1.jar</location>
+                                    <destination>hadoop-archive-logs.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-archives-3.1.1.jar</location>
+                                    <destination>hadoop-archives.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-aws-3.1.1.jar</location>
+                                    <destination>hadoop-aws.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-azure-3.1.1.jar</location>
+                                    <destination>hadoop-azure.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-azure-datalake-3.1.1.jar</location>
+                                    <destination>hadoop-azure-datalake.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-datajoin-3.1.1.jar</location>
+                                    <destination>hadoop-datajoin.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-distcp-3.1.1.jar</location>
+                                    <destination>hadoop-distcp.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-fs2img-3.1.1.jar</location>
+                                    <destination>hadoop-fs2img.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-extras-3.1.1.jar</location>
+                                    <destination>hadoop-extras.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-gridmix-3.1.1.jar</location>
+                                    <destination>hadoop-gridmix.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-kafka-3.1.1.jar</location>
+                                    <destination>hadoop-kafka.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-openstack-3.1.1.jar</location>
+                                    <destination>hadoop-openstack.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-resourceestimator-3.1.1.jar</location>
+                                    <destination>hadoop-resourceestimator.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-rumen-3.1.1.jar</location>
+                                    <destination>hadoop-rumen.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-sls-3.1.1.jar</location>
+                                    <destination>hadoop-sls.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-streaming-3.1.1.jar</location>
+                                    <destination>hadoop-streaming.jar</destination>
+                                </softlinkSource>
+
+                          </sources>
+                        </mapping>
+                        <mapping>
+                              <directory>${rpm.install.dir}/hadoop-mapreduce/lib</directory>
+                      </mapping>
+
+                        <mapping>
+                              <directory>${rpm.install.dir}/hadoop-mapreduce/sbin</directory>
+                              <sources>
+                                <source>
+                                    <location>${hadoop-dist.dir}/target/hadoop-${hadoop.version}/sbin</location>
+                                    <includes>
+                                      <include>mr-jobhistory-daemon.sh</include>
+                                      <include>yarn-daemons.sh</include>
+                                    </includes>
+                                </source>
+                            </sources>
+                        </mapping>
+                      </mappings>
+                        <preinstallScriptlet>
+                            <script>
+getent group mapred >/dev/null || groupadd -r mapred
+getent passwd mapred >/dev/null || /usr/sbin/useradd --comment "Hadoop MapReduce" --shell /bin/bash -M -r -g mapred -G hadoop --home /var/lib/hadoop-mapreduce mapred
+
+if [[ ! -e "/var/log/hadoop/mapreduce" ]]; then
+ /usr/bin/install -d -o mapred -g hadoop -m 0775  /var/log/hadoop/mapreduce
+fi
+
+if [[ ! -e "/var/run/hadoop/mapreduce" ]]; then
+ /usr/bin/install -d -o mapred -g hadoop -m 0775  /var/run/hadoop/mapreduce
+fi
+
+if [[ ! -e "/var/lib/hadoop-mapreduce" ]]; then
+ /usr/bin/install -d -o mapred -g hadoop -m 0755  /var/lib/hadoop-mapreduce
+fi
+
+if [[ ! -e "/var/lib/hadoop-mapreduce/cache" ]]; then
+ /usr/bin/install -d -o mapred -g hadoop -m 1777  /var/lib/hadoop-mapreduce/cache
+fi
+
+                            </script>
+                        </preinstallScriptlet>
+
+                        <postinstallScriptlet>
+                            <script>
+                              cd ${rpm.install.dir}/hadoop-mapreduce/bin
+                              chmod +x mapred
+                              chmod +x mapred.distro
+                              cd ${rpm.install.dir}/hadoop-mapreduce/sbin/
+                              chmod +x mr-jobhistory-daemon.sh
+                            </script>
+                        </postinstallScriptlet>
+                        <script>
+                        echo "saddsadas"
+                        </script>
+                        <preremoveScriptlet>
+                          <script>
+
+                          </script>
+                        </preremoveScriptlet>
+                    </configuration>
+                </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+</project>

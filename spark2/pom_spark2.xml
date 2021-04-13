@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.huawei.test</groupId>
+  <artifactId>build-rpm</artifactId>
+  <name>Build RPM Project</name>
+  <packaging>pom</packaging>
+  <version>1.0.0</version>
+  <description>build rpm project</description>
+
+  <properties>
+    <!-- Set default encoding so multi-byte tests work correctly on the Mac -->
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <resources.dir>${project.basedir}/../source</resources.dir>
+      <hadoop.name>spark2</hadoop.name>
+      <hadoop.version>2.4.7</hadoop.version>
+      <hdp.version>0.2.0.0</hdp.version>
+      <hdp.vname>0_2_0_0</hdp.vname>
+      <hdp.release>02</hdp.release>
+      <hadoop-dist.dir>/data/BUILD/hadoop/hadoop-dist</hadoop-dist.dir>
+      <ranger-dist.dir>/data/BUILD/ranger</ranger-dist.dir>
+      <hadoop-source.dir>${project.basedir}/../source</hadoop-source.dir>
+      <rpm.install.dir>/usr/odp/${hdp.version}-${hdp.release}</rpm.install.dir>
+      <rpm.install.arch>x86_64</rpm.install.arch>
+      <hadoop.jar.version>3.1.1</hadoop.jar.version>
+  </properties>
+
+  <build>
+      <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>rpm-maven-plugin</artifactId>
+            <version>2.1.5</version>
+            <configuration>
+                      <copyright>2021, optimasidata.com</copyright>
+                      <distribution>ODP</distribution>
+                      <group>ODP</group>
+                      <packager>ozzie</packager>
+                      <license>Apache License v2.0</license>
+                      <url>https://www.optimasidata.com/ODP/</url>
+                      <needarch>${rpm.install.arch}</needarch>
+                      <targetOS>linux</targetOS>
+                      <version>${hadoop.version}</version>
+                      <release>ODI</release>
+		      <defaultFilemode>644</defaultFilemode>
+		      <defaultDirmode>755</defaultDirmode>
+		      <defaultUsername>root</defaultUsername>
+		      <defaultGroupname>root</defaultGroupname>
+            </configuration>
+            <executions>
+
+                <execution>
+                    <id>spark2_${hdp.vname}_${hdp.release}</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>rpm</goal>
+                    </goals>
+                    <configuration>
+                        <name>spark2_${hdp.vname}_${hdp.release}</name>
+                        <description>
+                            spark2
+                        </description>
+                        <summary>
+                            spark2
+                        </summary>
+                        <autoRequires>false</autoRequires>
+		<mappings>
+                      <mapping>
+                        <directory>${rpm.install.dir}/etc/spark2/conf</directory>
+                        <sources>
+                          <source>
+                            <location>/data/BUILD/spark2/SOURCE/spark-2.4.7-bin-3.1.1/spark2/conf</location>
+                          </source>
+                        </sources>
+                      </mapping>
+
+                            <mapping>
+                                <directory>${rpm.install.dir}/spark2</directory>
+                                <sources>
+                                    <source>
+                                        <location>/data/BUILD/spark2/SOURCE/spark-2.4.7-bin-3.1.1</location>
+                                    </source>
+                                </sources>
+                            </mapping>
+                          <!--  <mapping>
+                                <directory>/var/lib/spark2</directory>
+                            </mapping> -->
+			</mappings>
+                        <preinstallScriptlet>
+                            <script>
+                              /usr/sbin/groupadd -r spark
+                              /usr/sbin/useradd -c "Spark" -s /bin/bash -g spark -d /var/lib/spark2 spark 2> /dev/null || :
+                              if [[ ! -e "/var/log/spark" ]]; then
+                                  /usr/bin/install -d -o spark -g spark -m 0755 /var/log/spark
+                              fi
+
+                              if [[ ! -e "/var/run/spark" ]]; then
+                                  /usr/bin/install -d -o spark -g spark -m 0755 /var/run/spark
+                              fi
+                              if [[ ! -e "/var/run/spark/work" ]]; then
+                                  /usr/bin/install -d -o spark -g spark -m 0755 /var/run/spark/work
+                              fi
+
+                             echo "installing now"
+                            </script>
+                        </preinstallScriptlet>
+			<postinstallScriptlet>
+                            <script>
+if [ !  -e "/etc/spark2/conf" ]; then
+rm -f /etc/spark2/conf
+mkdir -p /etc/spark2/conf
+cp -rp  /usr/odp/0.2.0.0-02/etc/spark2/conf/* /etc/spark2/conf
+fi
+/usr/bin/odp-select --rpm-mode set spark2-client 0.2.0.0-02
+/usr/bin/odp-select --rpm-mode set spark2-historyserver 0.2.0.0-02
+/usr/bin/odp-select --rpm-mode set spark2-thriftserver 0.2.0.0-02
+
+
+                                chmod 755 ${rpm.install.dir}/etc/spark2/conf/spark-env.sh
+                                chmod 755 ${rpm.install.dir}/etc/spark2/conf/spark-env.sh.template
+                                chmod 755 ${rpm.install.dir}/spark2/bin/beeline
+                                chmod 755 ${rpm.install.dir}/spark2/bin/docker-image-tool.sh
+                                chmod 755 ${rpm.install.dir}/spark2/bin/find-spark-home
+                                chmod 755 ${rpm.install.dir}/spark2/bin/load-spark-env.sh
+                                chmod 755 ${rpm.install.dir}/spark2/bin/run-example
+                                chmod 755 ${rpm.install.dir}/spark2/bin/spark-class
+                                chmod 755 ${rpm.install.dir}/spark2/bin/spark-shell
+                                chmod 755 ${rpm.install.dir}/spark2/bin/spark-sql
+                                chmod 755 ${rpm.install.dir}/spark2/bin/spark-submit
+                                chmod 755 ${rpm.install.dir}/spark2/bin/sparkR
+                                chmod 755 ${rpm.install.dir}/spark2/data/mllib/sample_linear_regression_data.txt
+
+                                chmod -R 755 ${rpm.install.dir}/spark2/examples/src/main/python
+                                chmod -R 755 ${rpm.install.dir}/spark2/sbin/
+
+
+                                ln -s /etc/spark2/conf ${rpm.install.dir}/spark2/conf
+                                ln -s /var/run/spark2/work ${rpm.install.dir}/spark2/work
+
+                        echo "install success!";
+                            </script>
+                        </postinstallScriptlet>
+                        <preremoveScriptlet>
+                            <script>
+                        
+			rm -rf ${rpm.install.dir}/spark2/conf
+                                rm -rf ${rpm.install.dir}/spark2/work
+
+                                echo "uninstalling  success";
+                            </script>
+			</preremoveScriptlet>
+                    </configuration>
+                </execution>
+
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+</project>

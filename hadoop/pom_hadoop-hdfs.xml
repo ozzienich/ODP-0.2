@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.apache</groupId>
+  <artifactId>build-rpm</artifactId>
+  <name>Build RPM Project</name>
+  <packaging>pom</packaging>
+  <version>1.0.0</version>
+  <description>build rpm project</description>
+
+  <properties>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <resources.dir>/data/BUILD/hadoop/SOURCE/HDFS</resources.dir>
+      <hadoop.name>hadoop</hadoop.name>
+      <hadoop.subname>hdfs</hadoop.subname>
+      <hadoop.version>3.1.1</hadoop.version>
+      <hdp.version>0.2.0.0</hdp.version>
+      <hdp.vname>0_2_0_0</hdp.vname>
+      <hdp.release>02</hdp.release>
+      <hadoop-dist.dir>/data/BUILD/hadoop/hadoop-dist</hadoop-dist.dir>
+      <rpm.install.dir>/usr/odp/${hdp.version}-${hdp.release}</rpm.install.dir>
+      <rpm.install.arch>x86_64</rpm.install.arch>
+      <hadoop.jar.version>3.1.1</hadoop.jar.version>
+  </properties>
+
+  <modules>
+  </modules>
+
+  <build>
+      <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>rpm-maven-plugin</artifactId>
+            <version>2.1.5</version>
+            <configuration>
+                <copyright>2021, optimasidata.com</copyright>
+                <distribution>ODP</distribution>
+                <group>System/Daemons</group>
+                <packager>ozzie</packager>
+                <license>Apache License v2.0</license>
+                <url>https://www.optimasidata.com/ODP/</url>
+                <needarch>${rpm.install.arch}</needarch>
+                <targetOS>linux</targetOS>
+                <version>${hadoop.version}</version>
+                <release>ODI</release>
+		<defaultFilemode>644</defaultFilemode>
+		<defaultDirmode>755</defaultDirmode>
+		<defaultUsername>root</defaultUsername>
+		<defaultGroupname>root</defaultGroupname>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>hadoop_${hdp.vname}_${hdp.release}-hdfs</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>rpm</goal>
+                    </goals>
+                    <configuration>
+                        <name>hadoop_${hdp.vname}_${hdp.release}-hdfs</name>
+                        <description>
+Hadoop Distributed File System (HDFS) is the primary storage system used by
+Hadoop applications. HDFS creates multiple replicas of data blocks and distributes
+them on compute nodes throughout a cluster to enable reliable, extremely rapid
+computations.
+                        </description>
+                        <summary>The Hadoop Distributed File System</summary>
+                        <autoRequires>false</autoRequires>
+                        <requires>
+                            <require>hadoop_${hdp.vname}_${hdp.release} >= 3.0.0</require>
+                        </requires>
+                        <mappings>
+                        <mapping>
+
+                            <directory>${rpm.install.dir}/etc/hadoop/conf.empty</directory>
+                            <sources>
+                                <source>
+                                  <location>${hadoop-dist.dir}/target/hadoop-${hadoop.version}/etc/hadoop</location>
+                                    <includes>
+                                        <include>hdfs-site.xml</include>
+                                    </includes>
+                                </source>
+                            </sources>
+                        </mapping>
+                        <mapping>
+                          <directory>${rpm.install.dir}/etc/security/limits.d/</directory>
+                          <sources>
+                            <source>
+                              <location>${resources.dir}/security_limit</location>
+                              <includes>
+                                  <include>hdfs.conf</include>
+                              </includes>
+                            </source>
+                        </sources>
+                        </mapping>
+                        <mapping>
+                          <directory>${rpm.install.dir}/hadoop-hdfs/bin</directory>
+                          <sources>
+                            <source>
+                              <location>${resources.dir}/bin</location>
+                              <includes>
+                                  <include>hdfs.distro</include>
+                                  <include>hdfs</include>
+                              </includes>
+                            </source>
+                          </sources>
+                        </mapping>
+                        <!-- hadoop/bin -->
+                        <mapping>
+                          <directory>${rpm.install.dir}/hadoop/bin</directory>
+                          <sources>
+                            <source>
+                              <location>${resources.dir}/bin</location>
+                              <includes>
+                                  <include>hdfs</include>
+                              </includes>
+                            </source>
+                          </sources>
+                        </mapping>
+                        <!-- hadoop/libexec -->
+                        <mapping>
+                          <directory>${rpm.install.dir}/hadoop/libexec</directory>
+                          <sources>
+                            <source>
+                              <location>${resources.dir}/libexec</location>
+                              <includes>
+                                <include>hdfs-config.sh</include>
+                                <include>init-hdfs.sh</include>
+                              </includes>
+                            </source>
+                          </sources>
+                        </mapping>
+                        <mapping>
+                          <directory>${rpm.install.dir}/hadoop-hdfs/etc/rc.d/init.d</directory>
+                        </mapping>
+                        <mapping>
+                            <directory>${rpm.install.dir}/hadoop-hdfs</directory>
+                            <sources>
+                                <source>
+                                    <location>${hadoop-dist.dir}/target/hadoop-${hadoop.version}/share/hadoop/hdfs</location>
+                                    <includes>
+                                        <include>hadoop-*.jar</include>
+                                    </includes>
+                                </source>
+                                <softlinkSource>
+                                    <location>hadoop-hdfs-3.1.1.jar</location>
+                                    <destination>hadoop-hdfs.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-hdfs-3.1.1-tests.jar</location>
+                                    <destination>hadoop-hdfs-tests.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-hdfs-client-3.1.1-tests.jar</location>
+                                    <destination>hadoop-hdfs-client-tests.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-hdfs-client-3.1.1.jar</location>
+                                    <destination>hadoop-hdfs-client.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-hdfs-httpfs-3.1.1.jar</location>
+                                    <destination>hadoop-hdfs-httpfs.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-hdfs-native-client-3.1.1-tests.jar</location>
+                                    <destination>hadoop-hdfs-native-client-tests.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-hdfs-native-client-3.1.1.jar</location>
+                                    <destination>hadoop-hdfs-native-client.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-hdfs-nfs-3.1.1.jar</location>
+                                    <destination>hadoop-hdfs-nfs.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-hdfs-rbf-3.1.1-tests.jar</location>
+                                    <destination>hadoop-hdfs-rbf-tests.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-hdfs-rbf-3.1.1.jar</location>
+                                    <destination>hadoop-hdfs-rbf.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-yarn-server-router-3.1.1.jar</location>
+                                    <destination>hadoop-yarn-server-router.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-yarn-server-sharedcachemanager-3.1.1.jar</location>
+                                    <destination>hadoop-yarn-server-sharedcachemanager.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-yarn-server-tests-3.1.1.jar</location>
+                                    <destination>hadoop-yarn-server-tests.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-yarn-server-timeline-pluginstorage-3.1.1.jar</location>
+                                    <destination>hadoop-yarn-server-timeline-pluginstorage.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-yarn-server-web-proxy-3.1.1.jar</location>
+                                    <destination>hadoop-yarn-server-web-proxy.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-yarn-services-api-3.1.1.jar</location>
+                                    <destination>hadoop-yarn-services-api.jar</destination>
+                                </softlinkSource>
+                                <softlinkSource>
+                                    <location>hadoop-yarn-services-core-3.1.1.jar</location>
+                                    <destination>hadoop-yarn-services-core.jar</destination>
+                                </softlinkSource>
+
+                              </sources>
+                        </mapping>
+                        <mapping>
+                              <directory>${rpm.install.dir}/hadoop-hdfs/lib</directory>
+                              <sources>
+                                <source>
+                                    <location>${hadoop-dist.dir}/target/hadoop-${hadoop.version}/share/hadoop/hdfs/lib</location>
+                                </source>
+                            </sources>
+                        </mapping>
+                        <!-- webapps-->
+                        <mapping>
+                              <directory>${rpm.install.dir}/hadoop-hdfs/webapps</directory>
+                              <sources>
+                                <source>
+                                    <location>${hadoop-dist.dir}/target/hadoop-${hadoop.version}/share/hadoop/hdfs/webapps</location>
+                                </source>
+                            </sources>
+                        </mapping>
+
+                        <mapping>
+                              <directory>${rpm.install.dir}/hadoop-hdfs/sbin</directory>
+                              <sources>
+                                <source>
+                                    <location>${hadoop-dist.dir}/target/hadoop-${hadoop.version}/sbin</location>
+                                    <includes>
+                                      <include>distribute-exclude.sh</include>
+                                      <include>refresh-namenodes.sh</include>
+                                    </includes>
+                                </source>
+                            </sources>
+                        </mapping>
+                      </mappings>
+                        <preinstallScriptlet>
+                            <script>
+getent group hdfs >/dev/null   || groupadd -r hdfs
+getent passwd hdfs >/dev/null || /usr/sbin/useradd --comment "Hadoop HDFS" --shell /bin/bash -M -r -g hdfs -G hadoop --home /var/lib/hadoop-hdfs hdfs
+
+if [[ ! -e "/var/log/hadoop/hdfs" ]]; then
+ /usr/bin/install -d -o hdfs -g hadoop -m 0775  /var/log/hadoop/hdfs
+fi
+
+if [[ ! -e "/var/run/hadoop/hdfs" ]]; then
+ /usr/bin/install -d -o hdfs -g hadoop -m 0775  /var/run/hadoop/hdfs
+fi
+
+if [[ ! -e "/var/lib/hadoop-hdfs" ]]; then
+ /usr/bin/install -d -o hdfs -g hadoop -m 0755  /var/lib/hadoop-hdfs
+fi
+
+if [[ ! -e "/var/lib/hadoop-hdfs/cache" ]]; then
+ /usr/bin/install -d -o hdfs -g hadoop -m 1777  /var/lib/hadoop-hdfs/cache
+fi
+                            </script>
+                        </preinstallScriptlet>
+
+                        <postinstallScriptlet>
+                            <script>
+                          </script>
+                        </postinstallScriptlet>
+                        <script>
+                        echo "saddsadas"
+                        </script>
+                        <preremoveScriptlet>
+                          <script>
+
+                          </script>
+                        </preremoveScriptlet>
+                    </configuration>
+                </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+</project>

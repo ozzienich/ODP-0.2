@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.apache</groupId>
+  <artifactId>build-rpm</artifactId>
+  <name>Build RPM Project</name>
+  <packaging>pom</packaging>
+  <version>1.0.0</version>
+  <description>build rpm project</description>
+
+  <properties>
+    <!-- Set default encoding so multi-byte tests work correctly on the Mac -->
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+     <resources.dir>/data/BUILD/hbase/SOURCE</resources.dir>
+      <hadoop.name>hadoop</hadoop.name>
+      <hadoop.subname>yarn</hadoop.subname>
+      <hadoop.version>2.2.6</hadoop.version>
+      <hdp.version>0.2.0.0</hdp.version>
+      <hdp.vname>0_2_0_0</hdp.vname>
+      <hdp.release>02</hdp.release>
+      <hadoop-dist.dir>/data/BUILD/hbase/COMPILED/hbase-2.2.6</hadoop-dist.dir>
+      <hadoopdist.dir>/data/BUILD/hadoop/hadoop-dist</hadoopdist.dir>
+      <rpm.install.dir>/usr/odp/${hdp.version}-${hdp.release}</rpm.install.dir>
+      <rpm.install.arch>x86_64</rpm.install.arch>
+      <hadoop.jar.version>2.2.6</hadoop.jar.version>
+  </properties>
+
+  <modules>
+  </modules>
+
+  <build>
+      <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>rpm-maven-plugin</artifactId>
+            <version>2.1.5</version>
+            <configuration>
+                <copyright>2021, optimasidata.com</copyright>
+                <distribution>ODP</distribution>
+                <group>System/Daemons</group>
+                <packager>ozzie</packager>
+                <license>Apache License v2.0</license>
+                <url>https://www.optimasidata.com/ODP/</url>
+                <needarch>${rpm.install.arch}</needarch>
+                <targetOS>linux</targetOS>
+                <version>${hadoop.version}</version>
+                <release>ODI</release>
+		<defaultFilemode>644</defaultFilemode>
+		<defaultDirmode>755</defaultDirmode>
+		<defaultUsername>root</defaultUsername>
+		<defaultGroupname>root</defaultGroupname>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>hbase_${hdp.vname}_${hdp.release}</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>rpm</goal>
+                    </goals>
+                    <configuration>
+                        <description>
+HBase is an open-source, distributed, column-oriented store modeled after Google' Bigtable: A Distributed Storage System for Structured Data
+Just as Bigtable leverages the distributed data storage provided by the Google File System, HBase provides Bigtable-like capabilities on top of Hadoop. HBase includes:
+* Convenient base classes for backing Hadoop MapReduce jobs with HBase tables
+* Query predicate push down via server side scan and get filters
+* Optimizations for real time queries
+* A high performance Thrift gateway
+* A REST-ful Web service gateway that supports XML, Protobuf, and binary data encoding options
+* Cascading source and sink modules
+* Extensible jruby-based (JIRB) shell
+* Support for exporting metrics via the Hadoop metrics subsystem to files or Ganglia; or via JMX
+                        </description>
+                        <summary>HBase is the Hadoop database. Use it when you need random, realtime read/write access to your Big Data.</summary>
+                        <autoRequires>false</autoRequires>
+                        <requires>
+                            <require>odp-select</require>
+                            <require>hadoop_${hdp.vname}_${hdp.release}-hdfs</require>
+                            <require>zookeeper_${hdp.vname}_${hdp.release}</require>
+                        </requires>
+                        <mappings>
+                        <mapping>
+                            <directory>${rpm.install.dir}/etc/hbase/conf.dist</directory>
+                            <sources>
+                                <source>
+                                  <location>${hadoop-dist.dir}/conf</location>
+                                </source>
+                            </sources>
+                        </mapping>
+                        <!-- hbase/bin -->
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/bin</directory>
+                          <sources>
+                            <source>
+                              <location>${hadoop-dist.dir}/bin</location>
+                              <includes>
+                                <include>considerAsDead.sh</include>
+                                <include>draining_servers.rb</include>
+                                <include>get-active-master.rb</include>
+                                <include>hbase-cleanup.sh</include>
+                                <include>hbase-common.sh</include>
+                                <include>hbase-config.cmd</include>
+                                <include>hbase-config.sh</include>
+                                <include>hbase-daemon.sh</include>
+                                <include>hbase-jruby</include>
+                                <include>hbase.cmd</include>
+                                <include>hbase.distro</include>
+                                <include>hirb.rb</include>
+                                <include>region_mover.rb</include>
+                                <include>region_status.rb</include>
+                                <include>shutdown_regionserver.rb</include>
+                                <include>start-hbase.cmd</include>
+                                <include>stop-hbase.cmd</include>
+                              </includes>
+                            </source>
+                            <source>
+                              <location>${resources.dir}/bin</location>
+                              <includes>
+                                <include>hbase</include>
+                                <include>hbase.distro</include>
+                              </includes>
+                            </source>
+                          </sources>
+                        </mapping>
+                        <!-- hbase/bin/test -->
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/bin/test</directory>
+                          <sources>
+                            <source>
+                              <location>${hadoop-dist.dir}/bin/test</location>
+                            </source>
+                          </sources>
+                        </mapping>
+                        <!-- hbase/bin/replication -->
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/bin/replication</directory>
+                          <sources>
+                            <source>
+                              <location>${hadoop-dist.dir}/bin/replication</location>
+                            </source>
+                          </sources>
+                        </mapping>
+                        <!-- hbase/conf -> /etc/hbase/conf -->
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/conf</directory>
+                          <sources>
+                            <softlinkSource>
+                              <location>/etc/hbase/conf</location>
+                            </softlinkSource>
+                          </sources>
+                        </mapping>
+                        <!-- hbase/etc/rc.d/init.d -->
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/etc/rc.d/init.d</directory>
+                        </mapping>
+                        <!-- THRIFT -->
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/include/</directory>
+                          <sources>
+                            <source>
+                              <location>${resources.dir}/include</location>
+                            </source>
+                          </sources>
+                        </mapping>
+
+                        <!-- hbase/hbase-webapps  -->
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/hbase-webapps</directory>
+                          <sources>
+                            <source>
+                              <location>${hadoop-dist.dir}/hbase-webapps</location>
+                            </source>
+                          </sources>
+                        </mapping>
+
+                        <!-- hbase/lib  -->
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/lib</directory>
+                          <sources>
+                            <source>
+                              <location>${resources.dir}/lib</location>
+                            </source>
+                            <source>
+                              <location>${hadoop-dist.dir}/lib/shaded-clients</location>
+                            </source>
+                            <source>
+                              <location>${hadoop-dist.dir}/lib</location>
+                              <includes>
+                                <include>aopalliance-1.0.jar</include>
+                                <include>aopalliance-repackaged-2.5.0-b32.jar</include>
+                                <include>avro-1.7.7.jar</include>
+                                <include>commons-*.jar</include>
+                                <include>curator-client-4.0.0.jar</include>
+                                <include>curator-framework-4.0.0.jar</include>
+                                <include>curator-recipes-4.0.0.jar</include>
+                                <include>disruptor-3.3.6.jar</include>
+                                <include>error_prone_annotations-2.3.3.jar</include>
+                                <include>gson-2.2.4.jar</include>
+                                <include>guava-11.0.2.jar</include>
+                                <include>guice-3.0.jar</include>
+                                <include>guice-servlet-3.0.jar</include>
+                                <include>hamcrest-core-1.3.jar</include>
+                                <include>hbase-*.jar</include>
+                                <include>hk*.jar</include>
+                                <include>ht*.jar</include>
+                                <include>j*.jar</include>
+                                <include>l*.jar</include>
+                                <include>m*.jar</include>
+                                <include>n*.jar</include>
+                                <include>o*.jar</include>
+                                <include>p*.jar</include>
+                                <include>r*.jar</include>
+                                <include>snappy-java-1.0.5.jar</include>
+                                <include>spymemcached-2.12.2.jar</include>
+                                <include>v*.jar</include>
+                                <include>x*.jar</include>
+                              </includes>
+                            </source>
+                            <softlinkSource>
+                                <location>${rpm.install.dir}/zookeeper/zookeeper.jar</location>
+                                <destination>zookeeper.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-annotations-2.2.6.jar</location>
+                              <destination>hbase-annotations.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-client-2.2.6.jar</location>
+                              <destination>hbase-client.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-common-2.2.6.jar</location>
+                              <destination>hbase-common.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-endpoint-2.2.6.jar</location>
+                              <destination>hbase-endpoint.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-examples-2.2.6.jar</location>
+                              <destination>hbase-examples.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-external-blockcache-2.2.6.jar</location>
+                              <destination>hbase-external-blockcache.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-hadoop-compat-2.2.6.jar</location>
+                              <destination>hbase-hadoop-compat.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-hadoop2-compat-2.2.6.jar</location>
+                              <destination>hbase-hadoop2-compat.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-http-2.2.6.jar</location>
+                              <destination>hbase-http.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-it-2.2.6.jar</location>
+                              <destination>hbase-it.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-mapreduce-2.2.6.jar</location>
+                              <destination>hbase-mapreduce.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-metrics-2.2.6.jar</location>
+                              <destination>hbase-metrics.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-metrics-api-2.2.6.jar</location>
+                              <destination>hbase-metrics-api.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-procedure-2.2.6.jar</location>
+                              <destination>hbase-procedure.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-protocol-2.2.6.jar</location>
+                              <destination>hbase-protocol.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-protocol-shaded-2.2.6.jar</location>
+                              <destination>hbase-protocol-shaded.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-replication-2.2.6.jar</location>
+                              <destination>hbase-replication.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-resource-bundle-2.2.6.jar</location>
+                              <destination>hbase-resource-bundle.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-rest-2.2.6.jar</location>
+                              <destination>hbase-rest.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-rsgroup-2.2.6.jar</location>
+                              <destination>hbase-rsgroup.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-server-2.2.6.jar</location>
+                              <destination>hbase-server.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-shaded-miscellaneous-2.2.1.jar</location>
+                              <destination>hbase-shaded-miscellaneous.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-shaded-client-2.2.6.jar</location>
+                              <destination>hbase-shaded-client.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-shaded-client-byo-hadoop-2.2.6.jar</location>
+                              <destination>hbase-shaded-client-byo-hadoop.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-shaded-mapreduce-2.2.6.jar</location>
+                              <destination>hbase-shaded-mapreduce.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-shell-2.2.6.jar</location>
+                              <destination>hbase-shell.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-testing-util-2.2.6.jar</location>
+                              <destination>hbase-testing-util.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-thrift-2.2.6.jar</location>
+                              <destination>hbase-thrift.jar</destination>
+                            </softlinkSource>
+                            <softlinkSource>
+                              <location>hbase-zookeeper-2.2.6.jar</location>
+                              <destination>hbase-zookeeper.jar</destination>
+                            </softlinkSource>
+                          </sources>
+                        </mapping>
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/lib/ruby</directory>
+                          <sources>
+                            <source>
+                              <location>${hadoop-dist.dir}/lib/ruby</location>
+                            </source>
+                          </sources>
+                        </mapping>
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/lib/zkcli</directory>
+                          <sources>
+                            <source>
+                              <location>${hadoop-dist.dir}/lib/zkcli</location>
+                            </source>
+                          </sources>
+                        </mapping>
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/logs</directory>
+                        </mapping>
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/pids</directory>
+                        </mapping>
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/logs</directory>
+                          <sources>
+                            <softlinkSource>
+                              <destination>hbase</destination>
+                              <location>/var/log/hbase</location>
+                            </softlinkSource>
+                          </sources>
+                        </mapping>
+                        <mapping>
+                          <directory>${rpm.install.dir}/hbase/pids</directory>
+                          <sources>
+                            <softlinkSource>
+                              <destination>hbase</destination>
+                              <location>/var/run/hbase</location>
+                            </softlinkSource>
+                          </sources>
+                        </mapping>
+
+                      </mappings>
+                      <preinstallScriptlet>
+                            <script>
+getent group hadoop 2>/dev/null >/dev/null || /usr/sbin/groupadd -r hadoop
+getent group hbase 2>/dev/null >/dev/null || /usr/sbin/groupadd -r hbase
+getent passwd hbase 2>/dev/null || /usr/sbin/useradd -c "HBase" -s /bin/bash -g hbase -G hadoop -r -d /var/run/hbase hbase 2>/dev/null || :
+
+if [[ ! -e "/var/log/hbase" ]]; then
+ /usr/bin/install -d -o hbase -g hbase -m 0755 /var/log/hbase
+fi
+
+if [[ ! -e "/var/run/hbase" ]]; then
+ /usr/bin/install -d -o hbase -g hbase -m 0755 /var/run/hbase
+fi
+                            </script>
+                        </preinstallScriptlet>
+
+                        <postinstallScriptlet>
+                            <script>
+if [ !  -e "/etc/hbase/conf" ]; then
+ rm -f /etc/hbase/conf
+ mkdir -p /etc/hbase/conf
+ cp -rp /usr/odp/0.2.0.0-02/etc/hbase/conf.dist/* /etc/hbase/conf
+fi
+
+/usr/bin/odp-select --rpm-mode set hbase-client 0.2.0.0-02
+/usr/bin/odp-select --rpm-mode set hbase-master 0.2.0.0-02
+/usr/bin/odp-select --rpm-mode set hbase-regionserver 0.2.0.0-02
+
+                            </script>
+                        </postinstallScriptlet>
+                        <script>
+                        echo "saddsadas"
+                        </script>
+                        <preremoveScriptlet>
+                          <script>
+
+                          </script>
+                        </preremoveScriptlet>
+                    </configuration>
+                </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+</project>
